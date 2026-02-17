@@ -79,6 +79,7 @@
     <child link="right_finger"/>
     <origin xyz="-0.042 -0.0185 0.069" rpy="1.5708 0 -1.5708"/>
     <axis xyz="0 0 1"/>
+    <mimic joint="left_finger_joint" multiplier="-1.0"/>
     <limit lower="-0.06" upper="0.0" effort="5" velocity="0.05"/>
   </joint>
 
