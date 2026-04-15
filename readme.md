@@ -58,7 +58,7 @@ gripper = Griplink("192.168.1.40")  # Replace with your gripper IP
 
 ```python
 gripper.flexgrip(
-    device_idx=0,
+    device_idx=0, 
     target_position=20.0,
     force=10,
     speed=50.0,
@@ -237,7 +237,7 @@ ros2 launch wpg_300_120_gripper_description gripper_interface.launch.py
 
 ---
 
-## 🤖 Actions (UPDATED)
+## 🤖 Actions
 
 | Action         | Purpose            | Goal Inputs                                | Feedback     |
 | -------------- | ------------------ | ------------------------------------------ | ------------ |
@@ -264,6 +264,5 @@ ros2 topic echo /griplink_node/device_states
 * Enable device before use
 * Home before first operation
 * Monitor `/device_states`
-* Ensure correct port mapping
-
+* Ensure correct port mapping (for wpg series, it's 0)
 ---
