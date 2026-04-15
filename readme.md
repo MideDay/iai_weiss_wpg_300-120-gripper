@@ -1,42 +1,125 @@
-# WPG 300-120 Gripper ROS2 & GRIPLINK Plugin
+# Griplink Python Wrapper & ROS2 Integration – README
 
 ## Overview
 
-The **WPG 300-120 Gripper ROS2 Package** integrates **Weiss Robotics’ WPG 300-120 gripper** with ROS2 via the **GRIPLINK-ROS2 Plugin 1.0.0**. It provides a **C++ ROS2 interface** to control the gripper and demonstrates usage through a **demo node**.
+This repository provides a **complete interface stack** for controlling the **WPG 300-120 gripper**:
 
-### Features
+* **Griplink Python Wrapper** – Lightweight scripting and fast prototyping
+* **ROS2 Integration** – Full robotic system integration
 
-* **GRIPLINK Node**: Implements GRIPLINK  as a ROS2 node for controlling devices.
-
-  * **Topics**: Publishes device states.
-  * **Services**: Exposes GRIPLINK commands as ROS2 services.
-  * **Actions**: Time-consuming commands like grip/release handled via ROS2 actions.
-* **Demo Node**: Example client node demonstrating basic gripper operations: homing, gripping, and releasing.
-* **Visualization Support**: Integration with WPG 300-120 URDF and RViz2.
-
-Tested on **ROS2 Jazzy Jalisco** with **Ubuntu 24.04**.
+This dual approach enables seamless transition from **quick experiments → real robotic deployment**.
 
 ---
 
-## Repository Structure
+# Part 1: Griplink Python Wrapper
 
-# WPG 300-120 Gripper ROS2 & GRIPLINK Plugin
+## Installation
 
-## Overview
+Download the official wrapper:
 
-The **WPG 300-120 Gripper ROS2 Package** integrates **Weiss Robotics’ WPG 300-120 gripper** with ROS2 via the **GRIPLINK-ROS2 Plugin 1.0.0**. It provides a **C++ ROS2 interface** to control the gripper and demonstrates usage through a **demo node**.  
+```bash
+wget https://weiss-robotics.com/files/griplink-plugins-table/pygriplink-2.0.0.zip
+unzip pygriplink-2.0.0.zip
+cd pygriplink-2.0.0
 
+tar -xf pygriplink-2.0.0.tar.gz
+cd pygriplink-2.0.0
 
-### Features
+pip install -e .
+```
 
-- **GRIPLINK Node**: Implements GRIPLINK as a ROS2 node for controlling devices.
-  - **Topics**: Publishes device states.
-  - **Services**: Exposes GRIPLINK commands as ROS2 services.
-  - **Actions**: Time-consuming commands like grip/release handled via ROS2 actions.
-- **Demo Node**: Example client node demonstrating basic gripper operations: homing, gripping, and releasing.
-- **Visualization Support**: Integration with WPG 300-120 URDF and RViz2.
+---
 
-Tested on **ROS2 Jazzy Jalisco** with **Ubuntu 24.04**.
+## Quick Start
+
+```python
+from griplink import Griplink
+
+gripper = Griplink("192.168.1.40")  # Replace with your gripper IP
+```
+
+---
+
+## Core Commands
+
+| Command         | Description                           | Example                      |
+| --------------- | ------------------------------------- | ---------------------------- |
+| `grip()`        | Close gripper using preset            | `gripper.grip(0, 1)`         |
+| `release()`     | Open gripper using preset             | `gripper.release(0, 1)`      |
+| `flexgrip()`    | Precise grip (position, force, speed) | see below                    |
+| `flexrelease()` | Controlled release motion             | see below                    |
+| `get_pos_mm()`  | Read jaw position                     | `gripper.get_pos_mm(0)`      |
+| `mgrip()`       | Multi-device grip                     | `gripper.mgrip([...], 1)`    |
+| `mrelease()`    | Multi-device release                  | `gripper.mrelease([...], 1)` |
+
+---
+
+## Flexible Control
+
+```python
+gripper.flexgrip(
+    device_idx=0,
+    target_position=20.0,
+    force=10,
+    speed=50.0,
+    acceleration=100.0
+)
+```
+
+```python
+gripper.flexrelease(
+    device_idx=0,
+    target_position=50.0,
+    speed=50.0,
+    acceleration=100.0
+)
+```
+
+---
+
+## Multi-Gripper Example
+
+```python
+gripper.mgrip([True, False, True], preset_idx=1)
+gripper.mrelease([True, False, True], preset_idx=1)
+```
+
+---
+
+## Minimal Example
+
+```python
+from griplink import Griplink
+
+gripper = Griplink("192.168.1.40")
+
+gripper.grip(0, 1)
+gripper.release(0, 1)
+
+gripper.disconnect()
+```
+
+---
+
+## ⚠️ Notes
+
+* `device_idx` = port on controller
+* Position → mm
+* Force → N
+* Speed → mm/s
+* Default TCP port: 10001
+
+---
+
+# Part 2: ROS2 Integration (WPG 300-120)
+
+## Features
+
+* GRIPLINK ROS2 node
+* Device state publishing
+* Service-based command API
+* Action-based long execution
+* RViz visualization support
 
 ---
 
@@ -45,66 +128,33 @@ Tested on **ROS2 Jazzy Jalisco** with **Ubuntu 24.04**.
 ```text
 iai_weiss_wpg_300-120-gripper/
 ├── griplink/
-│   ├── griplink/                   # GRIPLINK driver node
-│   │   ├── include/
-│   │   ├── launch/                 # Launch files for GRIPLINK node & demo
-│   │   ├── package.xml
-│   │   └── src/
-│   ├── griplink_interfaces/        # Custom messages, services, actions
-│   ├── LICENSE
-│   └── README.md
-├── readme.md
-└── wpg_300_120_description/
-    ├── CMakeLists.txt
-    ├── launch/                     # Launch files for visualization & interface
-    ├── meshes/                     # STL files
-    ├── package.xml
-    ├── rviz2/                      # RViz configuration
-    └── urdf/                        # URDF and XACRO files
+│   ├── griplink/
+│   ├── griplink_interfaces/
+├── wpg_300_120_description/
 ```
----
-
-## Hardware Setup
-
-### WPG-Series Grippers
-
-Follow [WPG Series Manual](https://weiss-robotics.com/servo-electric/wpg-series/product/wpg-series/?file=files/downloads/wpg/um_wpg_series_en.pdf&cid=10276), sections 5.2.1 & 5.2.2.
 
 ---
 
-## Installation & Build
-
-### Prerequisites
-
-* ROS2 Jazzy installed on Ubuntu 24.04
-* GRIPLINK device supporting GRIPLINK protocol V3
-
-### Steps
+## Installation
 
 ```bash
-# Navigate to workspace
 cd ~/ros2_ws
-
-# Install package dependencies
 rosdep install --from-paths src --ignore-src -r -y
-
-# Build workspace
-colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-
-# Source workspace
+colcon build --symlink-install
 source install/local_setup.bash
 ```
 
 ---
 
-## Launching the Gripper
+## Launch
 
-### Visualise WPG Robot + Gripper in RViz
+### Visualization
 
 ```bash
 ros2 launch wpg_300_120_gripper_description display.launch.py
 ```
-### Launch with Actual Gripper
+
+### Real Hardware
 
 ```bash
 ros2 launch wpg_300_120_gripper_description gripper_interface.launch.py
@@ -112,65 +162,108 @@ ros2 launch wpg_300_120_gripper_description gripper_interface.launch.py
 
 ---
 
-## GRIPLINK Node API
-
-### Parameters
-
-* `ip`: GRIPLINK IP address (default: `192.168.1.40`)
-* `port`: GRIPLINK TCP port (default: `10001`)
+## ROS2 API
 
 ### Topics
 
-* `/griplink_node/device_states` – Publishes current state of connected devices.
+| Topic                          | Description           |
+| ------------------------------ | --------------------- |
+| `/griplink_node/device_states` | Current gripper state |
 
-### Services
+---
 
-Refer to [service definitions](griplink/griplink_interfaces/srv).
-Examples:
+## 🧾 Key Services
 
-```bash
-ros2 service call /griplink_node/home griplink_interfaces/srv/Home "{port: 0}"
-ros2 service call /griplink_node/grip griplink_interfaces/srv/Grip "{port: 0, index: 0}"
-```
+| Service        | Purpose           | Example                                            |
+| -------------- | ----------------- | -------------------------------------------------- |
+| `/enable`      | Enable device     | `ros2 service call /griplink_node/enable ...`      |
+| `/home`        | Home gripper      | `ros2 service call /griplink_node/home ...`        |
+| `/grip`        | Grip preset       | `ros2 service call /griplink_node/grip ...`        |
+| `/release`     | Release preset    | `ros2 service call /griplink_node/release ...`     |
+| `/flexgrip`    | Precision grip    | `ros2 service call /griplink_node/flexgrip ...`    |
+| `/flexrelease` | Precision release | `ros2 service call /griplink_node/flexrelease ...` |
+| `/devstate`    | Device state      | `ros2 service call /griplink_node/devstate ...`    |
 
-### Actions
+---
 
-* `/griplink_node/grip` – Gripper action
-* `/griplink_node/release` – Release action
-* WPG-specific: `/flexgrip`, `/flexrelease`
+## ⚙️ Complete Service Reference
 
-```bash
-ros2 action send_goal /griplink_node/grip griplink_interfaces/action/Grip "{port: 0, index: 0}" --feedback
-```
+### 🟢 System Services
+
+| Service       | Purpose          | Key Inputs        | Notes         |
+| ------------- | ---------------- | ----------------- | ------------- |
+| `/id`         | System ID        | –                 | Identifier    |
+| `/protocol`   | Protocol version | –                 | Compatibility |
+| `/protassert` | Assert protocol  | protocol, version | Safety        |
+| `/ver`        | Firmware version | –                 | System info   |
+| `/sn`         | Serial number    | –                 | Unique ID     |
+| `/labelget`   | Get label        | –                 | Name          |
+| `/labelset`   | Set label        | label             | Rename        |
+| `/verbose`    | Debug mode       | enable            | Logging       |
+| `/bye`        | Disconnect       | –                 | Session close |
+
+---
+
+### 🔌 Device Information Services
+
+| Service      | Purpose     | Key Inputs     | Notes          |
+| ------------ | ----------- | -------------- | -------------- |
+| `/devname`   | Device name | port           | e.g. WPG       |
+| `/devvendor` | Vendor      | port           | Weiss Robotics |
+| `/devsn`     | Serial      | port           | Hardware ID    |
+| `/devver`    | Version     | port           | Firmware       |
+| `/devvid`    | Vendor ID   | port           | USB ID         |
+| `/devpid`    | Product ID  | port           | Device ID      |
+| `/devtagget` | Get tag     | port           | Metadata       |
+| `/devtagset` | Set tag     | port, tag      | Custom         |
+| `/devstate`  | State       | port           | IMPORTANT      |
+| `/devassert` | Validate    | port, vid, pid | Safety         |
+
+---
+
+### ⚙️ Control Services
+
+| Service        | Purpose          | Key Inputs                                 |
+| -------------- | ---------------- | ------------------------------------------ |
+| `/enable`      | Enable device    | port                                       |
+| `/disable`     | Disable device   | port                                       |
+| `/home`        | Home gripper     | port                                       |
+| `/grip`        | Grip preset      | port, index                                |
+| `/release`     | Release preset   | port, index                                |
+| `/flexgrip`    | Advanced grip    | port, position, force, speed, acceleration |
+| `/flexrelease` | Advanced release | port, position, speed, acceleration        |
+| `/clamp`       | Clamp control    | port, enable                               |
+| `/led`         | LED control      | port, index                                |
+
+---
+
+## 🤖 Actions (UPDATED)
+
+| Action         | Purpose            | Goal Inputs                                | Feedback     |
+| -------------- | ------------------ | ------------------------------------------ | ------------ |
+| `/grip`        | Close gripper      | port, index                                | device state |
+| `/release`     | Open gripper       | port, index                                | device state |
+| `/flexgrip`    | Parametric grip    | port, position, force, speed, acceleration | device state |
+| `/flexrelease` | Parametric release | port, position, speed, acceleration        | device state |
 
 ---
 
 ## Debugging
 
-1. Check available topics, services, and actions:
-
 ```bash
 ros2 topic list
 ros2 service list
 ros2 action list
-```
-
-2. Inspect published data:
-
-```bash
 ros2 topic echo /griplink_node/device_states
 ```
 
-3. Use services or actions to test gripper functionality.
-
 ---
 
-## References
+## ⚠️ Execution Rules
 
-* [Weiss Robotics WPG Series Manual](https://weiss-robotics.com/servo-electric/wpg-series/product/wpg/selectVariant/wpg-300-120-218/?file=files/downloads/wpg/um_wpg_series_en.pdf&cid=10276)
+* Enable device before use
+* Home before first operation
+* Monitor `/device_states`
+* Ensure correct port mapping
 
 ---
-
-## License
-
-This project is licensed under **MIT License** – see the [LICENSE](LICENSE) file.
