@@ -4,10 +4,11 @@
 
 This repository provides a **complete interface stack** for controlling the **WPG 300-120 gripper**:
 
-* **Griplink Python Wrapper** – Lightweight scripting and fast prototyping
-* **ROS2 Integration** – Full robotic system integration
+* **Griplink Python Wrapper** – Lightweight scripting for fast prototyping
+* **ROS2 Integration** – Full robotic system integration (planning, control, execution)
 
-This dual approach enables seamless transition from **quick experiments → real robotic deployment**.
+This dual approach enables a seamless transition from
+**quick experiments → real robotic deployment**.
 
 ---
 
@@ -15,7 +16,7 @@ This dual approach enables seamless transition from **quick experiments → real
 
 ## Installation
 
-Download the official wrapper:
+Download and install the official wrapper:
 
 ```bash
 wget https://weiss-robotics.com/files/griplink-plugins-table/pygriplink-2.0.0.zip
@@ -46,19 +47,19 @@ gripper = Griplink("192.168.1.40")  # Replace with your gripper IP
 | --------------- | ------------------------------------- | ---------------------------- |
 | `grip()`        | Close gripper using preset            | `gripper.grip(0, 1)`         |
 | `release()`     | Open gripper using preset             | `gripper.release(0, 1)`      |
-| `flexgrip()`    | Precise grip (position, force, speed) | see below                    |
-| `flexrelease()` | Controlled release motion             | see below                    |
+| `flexgrip()`    | Precise grip (position, force, speed) | See below                    |
+| `flexrelease()` | Controlled release motion             | See below                    |
 | `get_pos_mm()`  | Read jaw position                     | `gripper.get_pos_mm(0)`      |
 | `mgrip()`       | Multi-device grip                     | `gripper.mgrip([...], 1)`    |
 | `mrelease()`    | Multi-device release                  | `gripper.mrelease([...], 1)` |
 
 ---
 
-## Flexible Control
+## Flexible Control (Recommended for Precision Tasks)
 
 ```python
 gripper.flexgrip(
-    device_idx=0, 
+    device_idx=0,
     target_position=20.0,
     force=10,
     speed=50.0,
@@ -84,6 +85,8 @@ gripper.mgrip([True, False, True], preset_idx=1)
 gripper.mrelease([True, False, True], preset_idx=1)
 ```
 
+**Note:** Multi-device control is only applicable when multiple grippers are connected via a [GRIPLINK](https://weiss-robotics.com/griplink/griplink-et4/product/griplink-et4/) controller (e.g., GRIPLINK ET4).
+
 ---
 
 ## Minimal Example
@@ -99,15 +102,43 @@ gripper.release(0, 1)
 gripper.disconnect()
 ```
 
+### Parameter Explanation
+
+```python
+gripper.grip(0, 1)
+```
+
+* `0` → **device_idx (port number)**
+
+  * Default port for WPG gripper = **0**
+
+* `1` → **preset index**
+
+  * Predefined gripping configuration stored in the gripper
+  * Range typically: **1 to 8**
+  * Each preset corresponds to a predefined:
+
+    * Position
+    * Force
+    * Speed
+
+Same applies for:
+
+```python
+gripper.release(0, 1)
+```
+
 ---
 
 ## ⚠️ Notes
 
-* `device_idx` = port on controller
-* Position → mm
-* Force → N
-* Speed → mm/s
-* Default TCP port: 10001
+* `device_idx` = port on GRIPLINK controller
+* Units:
+
+  * Position → **mm**
+  * Force → **N**
+  * Speed → **mm/s**
+* Default TCP port: **10001**
 
 ---
 
@@ -115,10 +146,10 @@ gripper.disconnect()
 
 ## Features
 
-* GRIPLINK ROS2 node
-* Device state publishing
-* Service-based command API
-* Action-based long execution
+* GRIPLINK exposed as a ROS2 node
+* Real-time device state publishing
+* Service-based command interface
+* Action-based execution for long tasks
 * RViz visualization support
 
 ---
@@ -212,12 +243,12 @@ ros2 launch wpg_300_120_gripper_description gripper_interface.launch.py
 | `/devvendor` | Vendor      | port           | Weiss Robotics |
 | `/devsn`     | Serial      | port           | Hardware ID    |
 | `/devver`    | Version     | port           | Firmware       |
-| `/devvid`    | Vendor ID   | port           | USB ID         |
+| `/devvid`    | Vendor ID   | port           | USB-style ID   |
 | `/devpid`    | Product ID  | port           | Device ID      |
 | `/devtagget` | Get tag     | port           | Metadata       |
-| `/devtagset` | Set tag     | port, tag      | Custom         |
+| `/devtagset` | Set tag     | port, tag      | Custom label   |
 | `/devstate`  | State       | port           | IMPORTANT      |
-| `/devassert` | Validate    | port, vid, pid | Safety         |
+| `/devassert` | Validate    | port, vid, pid | Safety check   |
 
 ---
 
@@ -239,12 +270,12 @@ ros2 launch wpg_300_120_gripper_description gripper_interface.launch.py
 
 ## 🤖 Actions
 
-| Action         | Purpose            | Goal Inputs                                | Feedback     |
-| -------------- | ------------------ | ------------------------------------------ | ------------ |
-| `/grip`        | Close gripper      | port, index                                | device state |
-| `/release`     | Open gripper       | port, index                                | device state |
-| `/flexgrip`    | Parametric grip    | port, position, force, speed, acceleration | device state |
-| `/flexrelease` | Parametric release | port, position, speed, acceleration        | device state |
+| Action         | Purpose            | Goal Inputs                                | Feedback      |
+| -------------- | ------------------ | ------------------------------------------ | ------------- |
+| `/grip`        | Close gripper      | port, index                                | current state |
+| `/release`     | Open gripper       | port, index                                | current state |
+| `/flexgrip`    | Parametric grip    | port, position, force, speed, acceleration | current state |
+| `/flexrelease` | Parametric release | port, position, speed, acceleration        | current state |
 
 ---
 
@@ -261,8 +292,9 @@ ros2 topic echo /griplink_node/device_states
 
 ## ⚠️ Execution Rules
 
-* Enable device before use
-* Home before first operation
-* Monitor `/device_states`
-* Ensure correct port mapping (for wpg series, it's 0)
+* Enable device before issuing commands
+* Always home the gripper before first use
+* Monitor `/griplink_node/device_states`
+* Ensure correct port mapping (**WPG default = 0**)
+
 ---
