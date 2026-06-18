@@ -14,6 +14,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(griplink_interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 
 # -----------------------------------------------
@@ -33,6 +34,7 @@ ament_target_dependencies(
 	griplink_interfaces
 	rclcpp
   rclcpp_action
+  sensor_msgs
 )
 
 target_compile_features(
