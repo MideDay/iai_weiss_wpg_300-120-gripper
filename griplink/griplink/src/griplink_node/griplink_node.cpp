@@ -65,7 +65,7 @@ GriplinkNode::GriplinkNode() : rclcpp::Node( "griplink_node" )
 		callback_group_ 
 	);
 
-	value_publisher_ = this->create_publisher<JointState>( "device_values", 10 );
+	value_publisher_ = this->create_publisher<JointState>( "joint_state", 10 );
 	value_timer_ = create_wall_timer(
 		10ms,
 		std::bind( &GriplinkNode::publish_value_topic, this ),
