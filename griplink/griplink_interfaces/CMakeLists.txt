@@ -17,7 +17,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   # Messages
   msg/DeviceStates.msg
-  msg/Values.msg
 
   # Services
   srv/Id.srv
