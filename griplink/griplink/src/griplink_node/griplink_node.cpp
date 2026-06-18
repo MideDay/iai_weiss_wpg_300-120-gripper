@@ -65,6 +65,13 @@ GriplinkNode::GriplinkNode() : rclcpp::Node( "griplink_node" )
 		callback_group_ 
 	);
 
+	value_publisher_ = this->create_publisher<ValuesMsg>( "device_values", 10 );
+	value_timer_ = create_wall_timer(
+		10ms,
+		std::bind( &GriplinkNode::publish_value_topic, this ),
+		callback_group_
+	);
+
 	// Create services
 
 	id_srv_ = create_service<Id>( 
@@ -431,6 +438,58 @@ void GriplinkNode::update_device_states()
 	device_states_publisher_->publish( message );
 }	
 
+/**
+ * @brief Read all values from all indices for all devices and publish as a topic.
+ *
+ * For each connected device port, reads all available value indices (0-31) and publishes them.
+ * The published topic is 'device_values'.
+ */
+
+void GriplinkNode::publish_value_topic()
+{
+	ValuesMsg message;
+	std::string response;
+	StatusCode status;
+
+	// Iterate over all possible device ports known (respecting max_number_of_devices_)
+	for ( uint16_t port = 0; port < max_number_of_devices_; ++port )
+	{
+		// Skip devices that were initialized as not connected
+		if ( device_states_[port] == DeviceState::DS_NOT_CONNECTED )
+		{
+			continue;
+		}
+
+		// Read all available indices for this device
+		for ( uint16_t index = 0; index < 32; ++index )
+		{
+			uint32_t val = 0;
+			status = griplink_->value( response, port, index );
+
+			if ( status == StatusCode::E_SUCCESS )
+			{
+				try {
+					val = static_cast<uint32_t>( std::stoul( response ) );
+				} catch ( const std::exception & ) {
+					val = 0;
+				}
+				message.values.push_back( val );
+			}
+			else if ( status == StatusCode::E_INDEX_OUT_OF_BOUNDS )
+			{
+				// This device has no more indices, move to next device
+				break;
+			}
+			else
+			{
+				// On other error, push 0 and continue trying remaining indices
+				message.values.push_back( 0 );
+			}
+		}
+	}
+
+	value_publisher_->publish( message );
+}
 
 // ------------------------------------------------------------------------------------------------------------
 

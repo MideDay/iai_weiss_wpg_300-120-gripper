@@ -38,6 +38,7 @@
 #include "griplink/griplink_node/common.hpp"
 
 #include "griplink_interfaces/msg/device_states.hpp"
+#include "griplink_interfaces/msg/values.hpp"
 
 #include "griplink_interfaces/srv/id.hpp"
 #include "griplink_interfaces/srv/protocol.hpp"
@@ -126,6 +127,8 @@ class GriplinkNode : public rclcpp::Node
 	using Waitval = griplink_interfaces::srv::Waitval;
 	using Devstate = griplink_interfaces::srv::Devstate;
 	using Value = griplink_interfaces::srv::Value;
+
+	using ValuesMsg = griplink_interfaces::msg::Values;
 	using Gripcfgget = griplink_interfaces::srv::Gripcfgget;
 	using Gripcfgset = griplink_interfaces::srv::Gripcfgset;
 
@@ -147,6 +150,8 @@ class GriplinkNode : public rclcpp::Node
 	rclcpp::CallbackGroup::SharedPtr callback_group_;
 
 	rclcpp::Publisher<DeviceStates>::SharedPtr device_states_publisher_;
+	rclcpp::Publisher<ValuesMsg>::SharedPtr value_publisher_;
+	rclcpp::TimerBase::SharedPtr value_timer_;
 
 	rclcpp::Service<Id>::SharedPtr id_srv_;
 	rclcpp::Service<Protocol>::SharedPtr protocol_srv_;
@@ -190,6 +195,8 @@ class GriplinkNode : public rclcpp::Node
 
 	void initialize_device_states();
 	void update_device_states();
+
+	void publish_value_topic();
 
 	void id( Id::Request::SharedPtr req, Id::Response::SharedPtr res );
 	void protocol( Protocol::Request::SharedPtr req, Protocol::Response::SharedPtr res );
