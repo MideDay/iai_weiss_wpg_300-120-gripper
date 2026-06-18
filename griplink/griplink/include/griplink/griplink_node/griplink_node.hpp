@@ -34,11 +34,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 
+#include <sensor_msgs/msg/joint_state.hpp>
+
 #include "griplink/griplink_node/griplink.hpp"
 #include "griplink/griplink_node/common.hpp"
 
 #include "griplink_interfaces/msg/device_states.hpp"
-#include "griplink_interfaces/msg/values.hpp"
 
 #include "griplink_interfaces/srv/id.hpp"
 #include "griplink_interfaces/srv/protocol.hpp"
@@ -94,6 +95,7 @@ class GriplinkNode : public rclcpp::Node
   protected:
 
 	using DeviceStates = griplink_interfaces::msg::DeviceStates;
+	using JointState = sensor_msgs::msg::JointState;
 
 	using Id = griplink_interfaces::srv::Id;
 	using Protocol = griplink_interfaces::srv::Protocol;
@@ -128,7 +130,6 @@ class GriplinkNode : public rclcpp::Node
 	using Devstate = griplink_interfaces::srv::Devstate;
 	using Value = griplink_interfaces::srv::Value;
 
-	using ValuesMsg = griplink_interfaces::msg::Values;
 	using Gripcfgget = griplink_interfaces::srv::Gripcfgget;
 	using Gripcfgset = griplink_interfaces::srv::Gripcfgset;
 
@@ -150,7 +151,7 @@ class GriplinkNode : public rclcpp::Node
 	rclcpp::CallbackGroup::SharedPtr callback_group_;
 
 	rclcpp::Publisher<DeviceStates>::SharedPtr device_states_publisher_;
-	rclcpp::Publisher<ValuesMsg>::SharedPtr value_publisher_;
+	rclcpp::Publisher<JointState>::SharedPtr value_publisher_;
 	rclcpp::TimerBase::SharedPtr value_timer_;
 
 	rclcpp::Service<Id>::SharedPtr id_srv_;

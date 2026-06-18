@@ -65,7 +65,7 @@ GriplinkNode::GriplinkNode() : rclcpp::Node( "griplink_node" )
 		callback_group_ 
 	);
 
-	value_publisher_ = this->create_publisher<ValuesMsg>( "device_values", 10 );
+	value_publisher_ = this->create_publisher<JointState>( "device_values", 10 );
 	value_timer_ = create_wall_timer(
 		10ms,
 		std::bind( &GriplinkNode::publish_value_topic, this ),
@@ -439,17 +439,21 @@ void GriplinkNode::update_device_states()
 }	
 
 /**
- * @brief Read all values from all indices for all devices and publish as a topic.
+ * @brief Read all values from all indices for all devices and publish as a JointState topic.
  *
- * For each connected device port, reads all available value indices (0-31) and publishes them.
+ * For each connected device port, reads all available value indices (0-31) and publishes them
+ * as JointState messages with values as positions and velocity/effort set to 0.
  * The published topic is 'device_values'.
  */
 
 void GriplinkNode::publish_value_topic()
 {
-	ValuesMsg message;
+	JointState message;
 	std::string response;
 	StatusCode status;
+
+	// Set the timestamp
+	message.header.stamp = this->now();
 
 	// Iterate over all possible device ports known (respecting max_number_of_devices_)
 	for ( uint16_t port = 0; port < max_number_of_devices_; ++port )
@@ -460,31 +464,30 @@ void GriplinkNode::publish_value_topic()
 			continue;
 		}
 
-		// Read all available indices for this device
-		for ( uint16_t index = 0; index < 32; ++index )
-		{
-			uint32_t val = 0;
-			status = griplink_->value( response, port, index );
+		uint32_t val = 0;
+		status = griplink_->value( response, port, 0 );
 
-			if ( status == StatusCode::E_SUCCESS )
-			{
-				try {
-					val = static_cast<uint32_t>( std::stoul( response ) );
-				} catch ( const std::exception & ) {
-					val = 0;
-				}
-				message.values.push_back( val );
+		if ( status == StatusCode::E_SUCCESS )
+		{
+			try {
+				val = static_cast<uint32_t>( std::stoul( response ) );
+			} catch ( const std::exception & ) {
+				val = 0;
 			}
-			else if ( status == StatusCode::E_INDEX_OUT_OF_BOUNDS )
-			{
-				// This device has no more indices, move to next device
-				break;
-			}
-			else
-			{
-				// On other error, push 0 and continue trying remaining indices
-				message.values.push_back( 0 );
-			}
+			// Add joint name
+			message.name.push_back( "gripper" );
+			// Add position with the value, velocity and effort as 0
+			message.position.push_back( static_cast<double>( val ) );
+			message.velocity.push_back( 0.0 );
+			message.effort.push_back( 0.0 );
+		}
+		else
+		{
+			// On other error, add joint with 0 position and continue trying remaining indices
+			message.name.push_back( "gripper" );
+			message.position.push_back( 0.0 );
+			message.velocity.push_back( 0.0 );
+			message.effort.push_back( 0.0 );
 		}
 	}
 
