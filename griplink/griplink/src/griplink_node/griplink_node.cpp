@@ -42,9 +42,11 @@ GriplinkNode::GriplinkNode() : rclcpp::Node( "griplink_node" )
 
 	declare_parameter<std::string>( "ip", "192.168.1.40" );
 	declare_parameter<uint16_t>( "port", 10001 );
+	declare_parameter<std::string>( "joint_name", "gripper" );
 
 	get_parameter( "ip", ip );
 	get_parameter( "port", port );
+	get_parameter( "joint_name", joint_name_ );
 
 	// Create a griplink object
 
@@ -65,7 +67,7 @@ GriplinkNode::GriplinkNode() : rclcpp::Node( "griplink_node" )
 		callback_group_ 
 	);
 
-	value_publisher_ = this->create_publisher<JointState>( "joint_state", 10 );
+	value_publisher_ = this->create_publisher<JointState>( "joint_states", 10 );
 	value_timer_ = create_wall_timer(
 		10ms,
 		std::bind( &GriplinkNode::publish_value_topic, this ),
@@ -441,7 +443,7 @@ void GriplinkNode::update_device_states()
 /**
  * @brief Read all values from all indices for all devices and publish as a JointState topic.
  *
- * For each connected device port, reads all available value indices (0-31) and publishes them
+ * For each connected device port and publishes them
  * as JointState messages with values as positions and velocity/effort set to 0.
  * The published topic is 'device_values'.
  */
@@ -474,8 +476,8 @@ void GriplinkNode::publish_value_topic()
 			} catch ( const std::exception & ) {
 				val = 0;
 			}
-			// Add joint name
-			message.name.push_back( "gripper" );
+			// Add joint name with namespace prefix
+			message.name.push_back( joint_name_ );
 			// Add position with the value, velocity and effort as 0
 			message.position.push_back( static_cast<double>( val ) );
 			message.velocity.push_back( 0.0 );
@@ -484,7 +486,7 @@ void GriplinkNode::publish_value_topic()
 		else
 		{
 			// On other error, add joint with 0 position and continue trying remaining indices
-			message.name.push_back( "gripper" );
+			message.name.push_back( joint_name_ );
 			message.position.push_back( 0.0 );
 			message.velocity.push_back( 0.0 );
 			message.effort.push_back( 0.0 );

@@ -146,6 +146,7 @@ class GriplinkNode : public rclcpp::Node
 
 	std::array<DeviceState, 32> device_states_;
 	uint16_t max_number_of_devices_;
+	std::string joint_name_;
 	rclcpp::TimerBase::SharedPtr device_states_timer_;
 	
 	rclcpp::CallbackGroup::SharedPtr callback_group_;
