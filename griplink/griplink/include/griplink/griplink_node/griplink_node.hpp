@@ -147,6 +147,14 @@ class GriplinkNode : public rclcpp::Node
 	std::array<DeviceState, 32> device_states_;
 	uint16_t max_number_of_devices_;
 	std::string joint_name_;
+
+	// Raw value range coming from device (e.g. 0..120000)
+	uint32_t raw_min_;
+	uint32_t raw_max_;
+
+	// Mapped joint position range (meters) (e.g. 0.0..0.06)
+	double pos_min_;
+	double pos_max_;
 	rclcpp::TimerBase::SharedPtr device_states_timer_;
 	
 	rclcpp::CallbackGroup::SharedPtr callback_group_;

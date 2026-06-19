@@ -43,6 +43,12 @@ GriplinkNode::GriplinkNode() : rclcpp::Node( "griplink_node" )
 	declare_parameter<std::string>( "ip", "192.168.1.40" );
 	declare_parameter<uint16_t>( "port", 10001 );
 	declare_parameter<std::string>( "joint_name", "gripper" );
+	// Fixed mapping values (no parameters)
+	// raw values from the device typically range ~0..120000
+	raw_min_ = 0u;
+	raw_max_ = 120000u;
+	pos_min_ = 0.0;
+	pos_max_ = 0.06;
 
 	get_parameter( "ip", ip );
 	get_parameter( "port", port );
@@ -478,8 +484,34 @@ void GriplinkNode::publish_value_topic()
 			}
 			// Add joint name with namespace prefix
 			message.name.push_back( joint_name_ );
-			// Add position with the value, velocity and effort as 0
-			message.position.push_back( static_cast<double>( val ) );
+			// Map raw device value (e.g. 0..120000) to requested joint position range (pos_min_..pos_max_)
+			uint32_t rmin = raw_min_;
+			uint32_t rmax = raw_max_;
+			// Ensure rmin <= rmax
+			if ( rmin > rmax )
+			{
+				uint32_t tmp = rmin;
+				rmin = rmax;
+				rmax = tmp;
+			}
+
+			uint32_t v = val;
+			if ( v < rmin ) v = rmin;
+			if ( v > rmax ) v = rmax;
+
+			double mapped_pos = 0.0;
+			if ( rmax != rmin )
+			{
+				double ratio = static_cast<double>( rmax - v ) / static_cast<double>( rmax - rmin );
+				mapped_pos = pos_min_ + ( pos_max_ - pos_min_ ) * ratio;
+			}
+			else
+			{
+				// Fallback: use midpoint
+				mapped_pos = 0.5 * ( pos_min_ + pos_max_ );
+			}
+
+			message.position.push_back( mapped_pos );
 			message.velocity.push_back( 0.0 );
 			message.effort.push_back( 0.0 );
 		}
