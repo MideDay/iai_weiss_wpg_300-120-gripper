@@ -9,8 +9,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rclpy REQUIRED)
-find_package(griplink REQUIRED)
-find_package(griplink_interfaces REQUIRED)
+find_package(griplink QUIET)
+find_package(griplink_interfaces QUIET)
+
 
 # Install folders
 install(
